@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Logs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --discord-dark: #36393f;
+            --discord-darker: #2f3136;
+            --discord-darkest: #202225;
+            --discord-light: #dcddde;
+            --discord-primary: #5865f2;
+            --discord-primary-hover: #4752c4;
+            --discord-success: #3ba55c;
+            --discord-danger: #ed4245;
+            --discord-warning: #faa81a;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--discord-dark);
+            color: var(--discord-light);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background-color: var(--discord-darker);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-header h3 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .nav-link {
+            color: var(--discord-light);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        .nav-link.active {
+            background-color: var(--discord-primary);
+            color: #fff;
+        }
+
+        .nav-link i {
+            margin-right: 0.75rem;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+
+        .logs-container {
+            background-color: var(--discord-darker);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .logs-header h2 {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .log-entry {
+            padding: 1rem;
+            border-radius: 4px;
+            background-color: var(--discord-dark);
+            margin-bottom: 0.5rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-break: break-all;
+            transition: background-color 0.2s;
+        }
+
+        .log-entry:hover {
+            background-color: var(--discord-darkest);
+        }
+
+        .log-entry.error {
+            border-left: 4px solid var(--discord-danger);
+        }
+
+        .log-entry.warning {
+            border-left: 4px solid var(--discord-warning);
+        }
+
+        .log-entry.info {
+            border-left: 4px solid var(--discord-primary);
+        }
+
+        .log-entry.success {
+            border-left: 4px solid var(--discord-success);
+        }
+
+        .log-timestamp {
+            color: rgba(255,255,255,0.5);
+            margin-right: 0.5rem;
+        }
+
+        .search-box {
+            background-color: var(--discord-dark);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--discord-light);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            width: 300px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--discord-primary);
+        }
+
+        .btn-refresh {
+            background-color: var(--discord-primary);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--discord-primary-hover);
+        }
+
+        .log-filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            background-color: var(--discord-dark);
+            color: var(--discord-light);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background-color: var(--discord-primary);
+            border-color: var(--discord-primary);
+            color: #fff;
+        }
+
+        .filter-btn:hover {
+            background-color: var(--discord-darker);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>Bot Dashboard</h3>
+        </div>
+        <nav>
+            <a href="{{ url_for('dashboard') }}" class="nav-link">
+                <i class="bi bi-house-door"></i> Overview
+            </a>
+            <a href="{{ url_for('logs') }}" class="nav-link active">
+                <i class="bi bi-journal-text"></i> Logs
+            </a>
+            <a href="#" class="nav-link">
+                <i class="bi bi-shield"></i> Blacklist
+            </a>
+            <a href="#" class="nav-link">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="logs-container">
+            <div class="logs-header">
+                <h2>System Logs</h2>
+                <div class="log-controls">
+                    <input type="text" class="search-box" placeholder="Search logs...">
+                    <button class="btn-refresh" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="log-filters">
+                <button class="filter-btn active" data-type="all">All</button>
+                <button class="filter-btn" data-type="error">Errors</button>
+                <button class="filter-btn" data-type="warning">Warnings</button>
+                <button class="filter-btn" data-type="info">Info</button>
+                <button class="filter-btn" data-type="success">Success</button>
+            </div>
+
+            <div class="logs-content">
+                {% for log in logs %}
+                    {% set log_type = 'error' if 'ERROR' in log else ('warning' if 'WARNING' in log else ('success' if 'SUCCESS' in log else 'info')) %}
+                    <div class="log-entry {{ log_type }}" data-type="{{ log_type }}">
+                        <span class="log-timestamp">{{ log.split(' - ')[0] if ' - ' in log else '' }}</span>
+                        {{ log }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Log filtering
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Filter logs
+                const type = button.dataset.type;
+                document.querySelectorAll('.log-entry').forEach(entry => {
+                    if (type === 'all' || entry.dataset.type === type) {
+                        entry.style.display = '';
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Log search
+        const searchBox = document.querySelector('.search-box');
+        searchBox.addEventListener('input', () => {
+            const searchTerm = searchBox.value.toLowerCase();
+            document.querySelectorAll('.log-entry').forEach(entry => {
+                if (entry.textContent.toLowerCase().includes(searchTerm)) {
+                    entry.style.display = '';
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        });
+
+        // Auto-refresh logs every 30 seconds
+        setInterval(() => {
+            if (!searchBox.value) {  // Don't refresh if user is searching
+                location.reload();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
