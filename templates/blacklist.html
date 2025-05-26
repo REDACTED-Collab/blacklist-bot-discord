@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blacklist - Bot Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 p-6">
+            <h1 class="text-2xl font-bold mb-8">Bot Dashboard</h1>
+            <nav>
+                <a href="{{ url_for('dashboard') }}" class="flex items-center mb-4 text-gray-400 hover:text-white">
+                    <span class="mr-2">🏠</span> Overview
+                </a>
+                <a href="{{ url_for('logs') }}" class="flex items-center mb-4 text-gray-400 hover:text-white">
+                    <span class="mr-2">📝</span> Logs
+                </a>
+                <a href="{{ url_for('blacklist') }}" class="flex items-center mb-4 text-white bg-gray-700 rounded p-2">
+                    <span class="mr-2">⛔</span> Blacklist
+                </a>
+                <a href="#" class="flex items-center mb-4 text-gray-400 hover:text-white">
+                    <span class="mr-2">⚙️</span> Settings
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Blacklisted Users</h2>
+                <p class="text-gray-400">Manage blacklisted users across all servers</p>
+            </div>
+
+            <!-- Search and Actions -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="relative w-96">
+                    <input type="text" id="searchInput" placeholder="Search users..." 
+                           class="w-full bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Add User
+                </button>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-gray-800 rounded-lg overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-700">
+                            <th class="px-6 py-3 text-left text-sm font-semibold">User ID</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold">Reason</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold">Added By</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold">Date Added</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        {% for user in blacklisted_users %}
+                        <tr class="border-t border-gray-700">
+                            <td class="px-6 py-4">{{ user.user_id }}</td>
+                            <td class="px-6 py-4">{{ user.reason }}</td>
+                            <td class="px-6 py-4">{{ user.added_by }}</td>
+                            <td class="px-6 py-4">{{ user.added_at }}</td>
+                            <td class="px-6 py-4">
+                                <button onclick="removeUser('{{ user.user_id }}')" 
+                                        class="text-red-500 hover:text-red-600 focus:outline-none">
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const usersList = document.getElementById('usersList');
+        const rows = usersList.getElementsByTagName('tr');
+
+        searchInput.addEventListener('keyup', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            Array.from(rows).forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Remove user function
+        async function removeUser(userId) {
+            if (!confirm('Are you sure you want to remove this user from the blacklist?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/blacklist/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Reload the page to show updated list
+                    window.location.reload();
+                } else {
+                    alert('Failed to remove user from blacklist');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while removing the user');
+            }
+        }
+    </script>
+</body>
+</html>
