@@ -266,6 +266,20 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Ngrok Public URL Section -->
+            <div class="card">
+                <h2>Public URL</h2>
+                {% if ngrok_url %}
+                <p>Access your dashboard remotely at: 
+                    <a href="{{ ngrok_url }}" class="text-blue-400 hover:underline" target="_blank">
+                        {{ ngrok_url }}
+                    </a>
+                </p>
+                {% else %}
+                <p class="text-red-500">Ngrok tunnel not available.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 
