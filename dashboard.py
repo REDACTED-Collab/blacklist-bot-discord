@@ -5,15 +5,46 @@ import os
 import logging
 import asyncio
 from functools import wraps
+from pyngrok import ngrok
 
 app = Quart(__name__)
 
-# Load config
+# Load configs
 with open('config.json', 'r') as f:
     config = json.load(f)
 
+try:
+    with open('secrets.json', 'r') as f:
+        secrets = json.load(f)
+except FileNotFoundError:
+    secrets = {}
+
 app.secret_key = config.get('dashboard', {}).get('secret', 'your-secret-key')
 PORT = 8000  # Use port 8000 as specified
+
+NGROK_URL = None
+
+def start_ngrok_tunnel():
+    global NGROK_URL
+    try:
+        if config["dashboard"].get("enable_ngrok", False):
+            # Get authtoken from secrets.json
+            ngrok_token = secrets.get('ngrok_token')
+            if ngrok_token:
+                ngrok.set_auth_token(ngrok_token)
+                tunnel = ngrok.connect(config["dashboard"].get("port", 8000), "http")
+                NGROK_URL = tunnel.public_url
+                logging.info(f"ngrok tunnel opened: {NGROK_URL}")
+            else:
+                logging.error("ngrok_token not found in secrets.json")
+                NGROK_URL = "Tunnel not available - Missing authtoken"
+        else:
+            logging.info("ngrok integration disabled in config.")
+    except Exception as e:
+        logging.error(f"Failed to start ngrok tunnel: {e}")
+        NGROK_URL = "Tunnel not available"
+
+start_ngrok_tunnel()
 
 # Routes
 @app.route('/')
@@ -76,7 +107,7 @@ async def dashboard():
     except Exception as e:
         logging.error(f"Error reading blacklist activity: {e}")
     
-    return await render_template('dashboard.html', stats=stats, recent_activity=recent_activity)
+    return await render_template('dashboard.html', stats=stats, recent_activity=recent_activity, ngrok_url=NGROK_URL)
 
 @app.route('/blacklist')
 async def blacklist():
